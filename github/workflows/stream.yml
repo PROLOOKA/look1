@@ -21,3 +21,11 @@ jobs:
         run: |
           chmod +x restream.sh
           ./restream.sh
+
+      - name: Upload HLS
+        run: |
+          git config user.name "StreamBot"
+          git config user.email "bot@github.com"
+          git add hls/ --force
+          git commit -m "update" || echo "no changes"
+          git push origin main
