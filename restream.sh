@@ -4,7 +4,7 @@ mkdir -p hls
 rm -rf hls/*
 
 # الرابط الجديد
-SOURCE_URL="http://m12m5678.xyz:2095/live/jamalnajjar2026/462546564152/909563.m3u8"
+SOURCE_URL="http://185.160.192.64/live/DAE54374785/DAR65386775/461659.m3u8"
 
 LOGO_URL="https://up6.cc/2026/06/178065057949411.png"
 
