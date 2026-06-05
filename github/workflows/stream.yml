@@ -1,0 +1,23 @@
+name: Live Stream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */5 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Run Stream
+        run: |
+          chmod +x restream.sh
+          ./restream.sh
