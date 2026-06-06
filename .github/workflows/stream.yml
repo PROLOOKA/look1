@@ -14,42 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install FFmpeg and inotify
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg inotify-tools
 
-      - name: Start Stream with Auto-Upload
+      - name: Start Stream + Instant Upload
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x restream.sh
-          # تشغيل البث في الخلفية مع تسجيل الخرج
-          ./restream.sh > stream.log 2>&1 &
+          ./restream.sh &
           
-          # رفع الملفات كل 30 ثانية لمدة 5.5 ساعات
-          for i in {1..660}; do
-            sleep 30
-            # إظهار تقدم البث (مهم ليبقى الـ Action نشطاً)
-            echo "[$(date)] Uploading HLS files - iteration $i"
-            
-            git config --global user.name "StreamBot"
-            git config --global user.email "bot@github.com"
-            git add hls/
-            # فقط يرفع إذا كان هناك تغييرات
-            if ! git diff --cached --quiet; then
-              git commit -m "Auto-update HLS segments - $i"
+          # وظيفة رفع فورية لأي ملف جديد في مجلد hls
+          upload_new_files() {
+            inotifywait -m hls/ -e create -e modify --format '%f' | while read file
+            do
+              echo "New file detected: $file"
+              git config --global user.name "StreamBot"
+              git config --global user.email "bot@github.com"
+              git add "hls/$file"
+              git commit -m "Live segment: $file" || continue
               git push origin main
-              echo "[$(date)] HLS files uploaded successfully"
-            else
-              echo "[$(date)] No changes to upload"
-            fi
-            
-            # إظهار آخر 5 أسطر من الـ log للتأكد أن البث يعمل
-            if [ -f stream.log ]; then
-              echo "--- Last 5 lines of stream.log ---"
-              tail -5 stream.log
-            fi
-          done
+            done
+          }
           
-          # إعادة تشغيل الـ workflow نفسه قبل النهاية بـ 10 دقائق
-          echo "Restarting workflow..."
+          upload_new_files &
+          
+          # متابعة لمدة 5 ساعات ونصف ثم إعادة تشغيل الأكشن
+          sleep 19800
           gh workflow run "Infinite Restream"
