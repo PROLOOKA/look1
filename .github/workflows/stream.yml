@@ -2,7 +2,7 @@ name: Infinite Restream
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */5 * * *'  # كل 5 ساعات احتياطي
 
 permissions:
   contents: write
@@ -17,39 +17,23 @@ jobs:
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: Start Stream with Auto-Upload
+      - name: Start Live Stream
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x restream.sh
-          # تشغيل البث في الخلفية مع تسجيل الخرج
-          ./restream.sh > stream.log 2>&1 &
+          # تشغيل البث في الخلفية
+          ./restream.sh &
           
-          # رفع الملفات كل 30 ثانية لمدة 5.5 ساعات
-          for i in {1..660}; do
+          # انتظر 3 ثوانٍ للتأكد من بدء البث
+          sleep 3
+          
+          # تحديث المقاطع بشكل سريع كل 30 ثانية
+          while true; do
             sleep 30
-            # إظهار تقدم البث (مهم ليبقى الـ Action نشطاً)
-            echo "[$(date)] Uploading HLS files - iteration $i"
-            
             git config --global user.name "StreamBot"
             git config --global user.email "bot@github.com"
             git add hls/
-            # فقط يرفع إذا كان هناك تغييرات
-            if ! git diff --cached --quiet; then
-              git commit -m "Auto-update HLS segments - $i"
-              git push origin main
-              echo "[$(date)] HLS files uploaded successfully"
-            else
-              echo "[$(date)] No changes to upload"
-            fi
-            
-            # إظهار آخر 5 أسطر من الـ log للتأكد أن البث يعمل
-            if [ -f stream.log ]; then
-              echo "--- Last 5 lines of stream.log ---"
-              tail -5 stream.log
-            fi
+            git commit -m "Live segment update $(date +%s)" || true
+            git push origin main || true
           done
-          
-          # إعادة تشغيل الـ workflow نفسه قبل النهاية بـ 10 دقائق
-          echo "Restarting workflow..."
-          gh workflow run "Infinite Restream"
