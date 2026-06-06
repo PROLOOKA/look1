@@ -1,36 +1,55 @@
-name: 24/7 Live Stream
-
+name: Infinite Restream
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */5 * * *'
+    - cron: '0 */6 * * *'
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   stream:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
-    
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: تثبيت FFmpeg
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: تشغيل البث
+      - name: Start Stream with Auto-Upload
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x restream.sh
-          ./restream.sh &
+          # تشغيل البث في الخلفية مع تسجيل الخرج
+          ./restream.sh > stream.log 2>&1 &
           
-          while true; do
-            sleep 10
-            git config user.name "StreamBot"
-            git config user.email "bot@github.com"
+          # رفع الملفات كل 30 ثانية لمدة 5.5 ساعات
+          for i in {1..660}; do
+            sleep 30
+            # إظهار تقدم البث (مهم ليبقى الـ Action نشطاً)
+            echo "[$(date)] Uploading HLS files - iteration $i"
+            
+            git config --global user.name "StreamBot"
+            git config --global user.email "bot@github.com"
             git add hls/
-            git commit -m "Live $(date +%H:%M:%S)" || true
-            git push origin main || true
+            # فقط يرفع إذا كان هناك تغييرات
+            if ! git diff --cached --quiet; then
+              git commit -m "Auto-update HLS segments - $i"
+              git push origin main
+              echo "[$(date)] HLS files uploaded successfully"
+            else
+              echo "[$(date)] No changes to upload"
+            fi
+            
+            # إظهار آخر 5 أسطر من الـ log للتأكد أن البث يعمل
+            if [ -f stream.log ]; then
+              echo "--- Last 5 lines of stream.log ---"
+              tail -5 stream.log
+            fi
           done
+          
+          # إعادة تشغيل الـ workflow نفسه قبل النهاية بـ 10 دقائق
+          echo "Restarting workflow..."
+          gh workflow run "Infinite Restream"
