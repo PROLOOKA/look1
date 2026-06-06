@@ -1,38 +1,35 @@
-name: بث لا نهائي 24/7
+name: Infinite Restream
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 */5 * * *'
+    - cron: '0 */6 * * *'
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   stream:
     runs-on: ubuntu-latest
-    timeout-minutes: 280
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: تثبيت FFmpeg
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
-      - name: إعداد User-Agent للـ Git
-        run: |
-          git config --global http.userAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-
-      - name: تشغيل البث
+      - name: Start Stream
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x restream.sh
-          ./restream.sh
-
-      - name: رفع الملفات مع User-Agent
-        if: always()
-        run: |
-          git config --global user.name "StreamBot"
-          git config --global user.email "bot@github.com"
-          git -c http.userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" add hls/
-          git -c http.userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" diff --staged --quiet || git -c http.userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" commit -m "تحديث البث"
-          git -c http.userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" push origin main
+          ./restream.sh &
+          
+          # رفع كل 30 ثانية بدل دقيقتين (أسرع بكثير)
+          while true; do
+            sleep 30
+            git config --global user.name "StreamBot"
+            git config --global user.email "bot@github.com"
+            git add hls/
+            git commit -m "Live Update $(date +%H:%M:%S)" || true
+            git push origin main || true
+          done
