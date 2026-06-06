@@ -6,7 +6,7 @@ RETRY_DELAY=10
 HLS_DIR="hls"
 
 # ============= ضع روابطك هنا =============
-SOURCE_URL="ضع_رابط_المصدر_هنا"
+SOURCE_URL="http://gooon.tv:8080/play/link/6aa38f85-dafa-426e-bbd3-20ca86d89ac1/eyJpdiI6Ino0ZnNJZUs3UERoUmFqclBVVDRTUFE9PSIsInZhbHVlIjoiMEpDWlRPaDlXbktiR01IUmVVTitKNW45V1kxWkxKQlVXTGtJWHRRZU1QSnFieXpOSXVKaFd1MXBJV2l4ZjhuUCIsIm1hYyI6IjhhYTljM2E4NTUyZGExZWMxNGYwNGRhNzA4ZjY5MGZiYjBkNWZjYmVhMjQwNjdjZGMyOWI0YmNhN2MyMTQ0ZDciLCJ0YWciOiIifQ==.m3u8"
 LOGO_URL="https://up6.cc/2026/06/178065057949411.png"
 
 # ============= User-Agent متقدم =============
