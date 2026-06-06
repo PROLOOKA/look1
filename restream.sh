@@ -3,7 +3,7 @@
 mkdir -p hls
 rm -rf hls/*
 
-SOURCE_URL="https://lookprotvfreefastfreenjvgfiibubehgifty582djs2295dhddhs.fskwooohur853jdn3333dsjvxznfswlhgi7888vccmd809874321f6bfreesego.workers.dev/b1.m3u8"
+SOURCE_URL="http://vlue.vip/live/778047230676/806944331192/789897.m3u8"
 LOGO_URL="https://up6.cc/2026/06/178065057949411.png"
 
 wget -O logo.png "$LOGO_URL"
